@@ -1,10 +1,15 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.Scanner;
-import java.time.LocalDate; //API LocalDate
-import java.time.LocalTime; //API LocalTime
 
 public class PemesananTiketPesawat {
+
     static class Tiket {
         String maskapai;
         String tujuan;
@@ -18,197 +23,194 @@ public class PemesananTiketPesawat {
 
         @Override
         public String toString() {
-            return "Maskapai: " + maskapai + ", Tujuan: " + tujuan + ", Harga: Rp" + harga;
+            return maskapai + ", " + tujuan + ", Rp" + harga;
         }
     }
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        ArrayList<Tiket> daftarTiket = new ArrayList<>();
+    private JFrame frame;
+    private JTable tiketTable;
+    private DefaultTableModel tableModel;
+    private ArrayList<Tiket> daftarTiket;
 
-        // Menambahkan beberapa tiket awal
+    public PemesananTiketPesawat() {
+        daftarTiket = new ArrayList<>();
         daftarTiket.add(new Tiket("Garuda Indonesia", "Jakarta - Bali", 1500000));
         daftarTiket.add(new Tiket("Lion Air", "Jakarta - Surabaya", 800000));
         daftarTiket.add(new Tiket("Citilink", "Jakarta - Yogyakarta", 600000));
 
-        while (true) {
-            System.out.println("\nMenu:");
-            System.out.println("1. Tampilkan Daftar Tiket");
-            System.out.println("2. Tambah Tiket");
-            System.out.println("3. Update Tiket");
-            System.out.println("4. Hapus Tiket");
-            System.out.println("5. Pesan Tiket");
-            System.out.println("6. Keluar");
-            System.out.print("Pilih menu: ");
+        initialize();
+    }
 
-            int menu = 0;
+    private void initialize() {
+        frame = new JFrame("Sistem Pemesanan Tiket Pesawat");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 400);
+        frame.setLayout(new BorderLayout());
+
+        // Set background color to a soft light blue
+        Color softBlue = new Color(173, 216, 230);
+        frame.getContentPane().setBackground(softBlue);
+
+        String[] columnNames = {"Maskapai", "Tujuan", "Harga"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        tiketTable = new JTable(tableModel);
+        tiketTable.setBackground(softBlue);
+        tiketTable.setFillsViewportHeight(true);
+
+        refreshTable();
+
+        JScrollPane scrollPane = new JScrollPane(tiketTable);
+        scrollPane.getViewport().setBackground(softBlue); // Set background for the viewport
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        buttonPanel.setBackground(softBlue); // Set panel background to match
+
+        JButton addButton = new JButton("Tambah Tiket");
+        JButton updateButton = new JButton("Update Tiket");
+        JButton deleteButton = new JButton("Hapus Tiket");
+        JButton orderButton = new JButton("Pesan Tiket");
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(orderButton);
+
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        addButton.addActionListener(e -> addTicket());
+        updateButton.addActionListener(e -> updateTicket(tiketTable.getSelectedRow()));
+        deleteButton.addActionListener(e -> deleteTicket(tiketTable.getSelectedRow()));
+        orderButton.addActionListener(e -> orderTicket(tiketTable.getSelectedRow()));
+
+        frame.setVisible(true);
+    }
+
+    private void refreshTable() {
+        tableModel.setRowCount(0);
+        for (Tiket tiket : daftarTiket) {
+            tableModel.addRow(new Object[]{tiket.maskapai, tiket.tujuan, "Rp" + tiket.harga});
+        }
+    }
+
+    private void addTicket() {
+        JTextField maskapaiField = new JTextField();
+        JTextField tujuanField = new JTextField();
+        JTextField hargaField = new JTextField();
+
+        Object[] message = {
+                "Nama Maskapai:", maskapaiField,
+                "Tujuan:", tujuanField,
+                "Harga:", hargaField
+        };
+
+        int option = JOptionPane.showConfirmDialog(frame, message, "Tambah Tiket", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
             try {
-                menu = scanner.nextInt();
-                scanner.nextLine(); // Clear the buffer
-            } catch (InputMismatchException e) {
-                System.out.println("Input tidak valid. Silakan masukkan angka.");
-                scanner.next(); // Clear the invalid input
-                continue; // Restart the loop
-            }
-
-            switch (menu) {
-                case 1:
-                    // Read: Menampilkan daftar tiket
-                    System.out.println("\nDaftar tiket yang tersedia:");
-                    for (int i = 0; i < daftarTiket.size(); i++) {
-                        System.out.println((i + 1) + ". " + daftarTiket.get(i));
-                    }
-                    break;
-
-                case 2:
-                    // Create: Menambahkan tiket baru
-                    try {
-                        System.out.print("Masukkan nama maskapai: ");
-                        String maskapai = scanner.nextLine();
-                        System.out.print("Masukkan tujuan: ");
-                        String tujuan = scanner.nextLine();
-                        System.out.print("Masukkan harga: ");
-                        double harga = scanner.nextDouble();
-                        daftarTiket.add(new Tiket(maskapai, tujuan, harga));
-                        System.out.println("Tiket berhasil ditambahkan.");
-                    } catch (InputMismatchException e) {
-                        System.out.println("Input tidak valid. Silakan masukkan harga yang benar.");
-                        scanner.next(); // Clear the invalid input
-                    }
-                    break;
-
-                case 3:
-                    // Update: Memperbarui tiket yang ada
-                    try {
-                        System.out.print("Masukkan nomor tiket yang ingin diupdate: ");
-                        int nomorUpdate = scanner.nextInt();
-                        if (nomorUpdate > 0 && nomorUpdate <= daftarTiket.size()) {
-                            scanner.nextLine(); // Clear the buffer
-                            System.out.print("Masukkan nama maskapai baru: ");
-                            String maskapai = scanner.nextLine();
-                            System.out.print("Masukkan tujuan baru: ");
-                            String tujuan = scanner.nextLine();
-                            System.out.print("Masukkan harga baru: ");
-                            double harga = scanner.nextDouble();
-                            Tiket tiketUpdate = new Tiket(maskapai, tujuan, harga);
-                            daftarTiket.set(nomorUpdate - 1, tiketUpdate);
-                            System.out.println("Tiket berhasil diupdate.");
-                        } else {
-                            System.out.println("Nomor tiket tidak valid.");
-                        }
-                    } catch (InputMismatchException e) {
-                        System.out.println("Input tidak valid. Silakan masukkan angka.");
-                        scanner.next(); // Clear the invalid input
-                    }
-                    break;
-
-                case 4:
-                    // Delete: Menghapus tiket
-                    try {
-                        System.out.print("Masukkan nomor tiket yang ingin dihapus: ");
-                        int nomorHapus = scanner.nextInt();
-                        if (nomorHapus > 0 && nomorHapus <= daftarTiket.size()) {
-                            daftarTiket.remove(nomorHapus - 1);
-                            System.out.println("Tiket berhasil dihapus.");
-                        } else {
-                            System.out.println("Nomor tiket tidak valid.");
-                        }
-                    } catch (InputMismatchException e) {
-                        System.out.println("Input tidak valid. Silakan masukkan angka.");
-                        scanner.next(); // Clear the invalid input
-                    }
-                    break;
-
-                case 5:
-                    // Pesan Tiket
-                    if (daftarTiket.isEmpty()) {
-                        System.out.println("Tidak ada tiket yang tersedia untuk dipesan.");
-                        break;
-                    }
-                    try {
-                        System.out.println("\nDaftar tiket yang tersedia:");
-                        for (int i = 0; i < daftarTiket.size(); i++) {
-                            System.out.println((i + 1) + ". " + daftarTiket.get(i));
-                        }
-
-                        System.out.print("\nMasukkan nomor tiket yang ingin Anda pesan: ");
-                        int pilihan = scanner.nextInt();
-                        if (pilihan > 0 && pilihan <= daftarTiket.size()) {
-                            Tiket tiketDipilih = daftarTiket.get(pilihan - 1);
-                            System.out.println("\nAnda telah memilih tiket berikut:");
-                            System.out.println(tiketDipilih);
-
-                            scanner.nextLine(); // Clear the buffer
-
-                            String nama = "";
-                            while (true) {
-                                System.out.print("\nMasukkan nama Anda untuk konfirmasi: ");
-                                nama = scanner.nextLine();
-                                if (!nama.isEmpty()) {
-                                    break;
-                                } else {
-                                    System.out.println("Nama tidak boleh kosong.");
-                                }
-                            }
-
-                            int jumlahTiket = 0;
-                            while (true) {
-                                System.out.print("Masukkan jumlah tiket yang ingin dibeli: ");
-                                jumlahTiket = scanner.nextInt();
-                                if (jumlahTiket > 0) {
-                                    break;
-                                } else {
-                                    System.out.println("Jumlah tiket harus lebih dari 0.");
-                                }
-                            }
-
-                            // Meminta pengguna untuk memasukkan tanggal penerbangan
-                            LocalDate tanggalPenerbangan = null;
-                            while (true) {
-                                try {
-                                    System.out.print("Masukkan tanggal penerbangan (yyyy-MM-dd): ");
-                                    String inputTanggal = scanner.next();
-                                    tanggalPenerbangan = LocalDate.parse(inputTanggal); // Menggunakan API LocalDate untuk mengonversi string menjadi tanggal
-                                    break;
-                                } catch (Exception e) {
-                                    System.out.println("Format tanggal tidak valid. Silakan masukkan dalam format yyyy-MM-dd.");
-                                }
-                            }
-
-                            // Meminta pengguna untuk memasukkan waktu penerbangan
-                            LocalTime waktuPenerbangan = null;
-                            while (true) {
-                                try {
-                                    System.out.print("Masukkan waktu penerbangan (HH:mm): ");
-                                    String inputWaktu = scanner.next();
-                                    waktuPenerbangan = LocalTime.parse(inputWaktu);  // Menggunakan API LocalTime untuk mengonversi string menjadi waktu
-                                    break;
-                                } catch (Exception e) {
-                                    System.out.println("Format waktu tidak valid. Silakan masukkan dalam format HH:mm.");
-                                }
-                            }
-
-                            double totalHarga = tiketDipilih.harga * jumlahTiket;
-                            System.out.println("\nTerima kasih, " + nama + ". Anda telah memesan " + jumlahTiket + " tiket.");
-                            System.out.println("Tanggal Penerbangan: " + tanggalPenerbangan + ", Waktu Penerbangan: " + waktuPenerbangan);
-                            System.out.println("Total harga: Rp" + totalHarga);
-                        } else {
-                            System.out.println("Pilihan tidak valid.");
-                        }
-                    } catch (InputMismatchException e) {
-                        System.out.println("Input tidak valid. Silakan masukkan angka.");
-                        scanner.next(); // Clear the invalid input
-                    }
-                    break;
-
-                case 6:
-                    System.out.println("Terima kasih telah menggunakan sistem pemesanan tiket pesawat.");
-                    scanner.close();
-                    return;
-
-                default:
-                    System.out.println("Pilihan tidak valid. Silakan coba lagi.");
+                String maskapai = maskapaiField.getText();
+                String tujuan = tujuanField.getText();
+                double harga = Double.parseDouble(hargaField.getText());
+                Tiket tiket = new Tiket(maskapai, tujuan, harga);
+                daftarTiket.add(tiket);
+                refreshTable();
+                JOptionPane.showMessageDialog(frame, "Tiket berhasil ditambahkan.");
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Harga harus berupa angka.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void updateTicket(int index) {
+        if (index == -1) {
+            JOptionPane.showMessageDialog(frame, "Pilih tiket yang ingin diupdate.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Tiket tiket = daftarTiket.get(index);
+
+        JTextField maskapaiField = new JTextField(tiket.maskapai);
+        JTextField tujuanField = new JTextField(tiket.tujuan);
+        JTextField hargaField = new JTextField(String.valueOf(tiket.harga));
+
+        Object[] message = {
+                "Nama Maskapai:", maskapaiField,
+                "Tujuan:", tujuanField,
+                "Harga:", hargaField
+        };
+
+        int option = JOptionPane.showConfirmDialog(frame, message, "Update Tiket", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            try {
+                tiket.maskapai = maskapaiField.getText();
+                tiket.tujuan = tujuanField.getText();
+                tiket.harga = Double.parseDouble(hargaField.getText());
+                refreshTable();
+                JOptionPane.showMessageDialog(frame, "Tiket berhasil diupdate.");
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Harga harus berupa angka.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void deleteTicket(int index) {
+        if (index == -1) {
+            JOptionPane.showMessageDialog(frame, "Pilih tiket yang ingin dihapus.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int option = JOptionPane.showConfirmDialog(frame, "Yakin ingin menghapus tiket ini?", "Hapus Tiket", JOptionPane.YES_NO_OPTION);
+        if (option == JOptionPane.YES_OPTION) {
+            daftarTiket.remove(index);
+            refreshTable();
+            JOptionPane.showMessageDialog(frame, "Tiket berhasil dihapus.");
+        }
+    }
+
+    private void orderTicket(int index) {
+        if (index == -1) {
+            JOptionPane.showMessageDialog(frame, "Pilih tiket yang ingin dipesan.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Tiket tiket = daftarTiket.get(index);
+
+        JTextField namaField = new JTextField();
+        JTextField jumlahField = new JTextField();
+        JTextField tanggalField = new JTextField("yyyy-MM-dd");
+        JTextField waktuField = new JTextField("HH:mm");
+
+        Object[] message = {
+                "Nama:", namaField,
+                "Jumlah Tiket:", jumlahField,
+                "Tanggal Penerbangan (yyyy-MM-dd):", tanggalField,
+                "Waktu Penerbangan (HH:mm):", waktuField
+        };
+
+        int option = JOptionPane.showConfirmDialog(frame, message, "Pesan Tiket", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            try {
+                String nama = namaField.getText();
+                int jumlah = Integer.parseInt(jumlahField.getText());
+                LocalDate tanggal = LocalDate.parse(tanggalField.getText());
+                LocalTime waktu = LocalTime.parse(waktuField.getText());
+
+                double totalHarga = jumlah * tiket.harga;
+                JOptionPane.showMessageDialog(frame, "Pesanan berhasil!\n" +
+                        "Nama: " + nama + "\n" +
+                        "Tanggal: " + tanggal + "\n" +
+                        "Waktu: " + waktu + "\n" +
+                        "Total Harga: Rp" + totalHarga);
+
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Jumlah harus berupa angka.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (DateTimeParseException e) {
+                JOptionPane.showMessageDialog(frame, "Format tanggal atau waktu tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(PemesananTiketPesawat::new);
     }
 }
