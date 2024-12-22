@@ -11,7 +11,7 @@
 # # Persyaratan Sistem
 # - Java Development Kit (JDK) versi 8 atau lebih baru.
 # - IDE (Integrated Development Environment) seperti IntelliJ IDEA atau yang lainnya untuk menjalankan dan mengembangkan aplikasi ini.
-
+#
 # # Cara Menjalankan Aplikasi
 # 1. Clone atau Unduh Proyek
 # 2. Buka di IDE
